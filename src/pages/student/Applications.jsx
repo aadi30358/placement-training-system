@@ -6,15 +6,17 @@ import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const StudentApplications = () => {
-    const { getStudentApplications, setApplications, applications } = useData();
+    const { getStudentApplications, withdrawApplication } = useData();
     const { user } = useAuth();
 
     const appliedJobs = getStudentApplications(user?.id);
 
     const handleWithdraw = (appId, jobTitle) => {
         if (window.confirm(`Are you sure you want to withdraw your application for ${jobTitle}?`)) {
-            setApplications(prev => prev.filter(app => app.id !== appId));
-            toast.success('Application withdrawn successfully');
+            const success = withdrawApplication(appId);
+            if (success) {
+                toast.success('Application withdrawn successfully');
+            }
         }
     };
 

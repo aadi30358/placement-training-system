@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, Mail, GraduationCap, Save, MapPin, Phone, Hash, ShieldCheck } from 'lucide-react';
 import { Card, Button, Input } from '../../components/UI';
 import { useAuth } from '../../context/AuthContext';
+import { useData } from '../../context/DataContext';
 import toast from 'react-hot-toast';
 
 const OfficerProfile = () => {
@@ -26,6 +27,7 @@ const OfficerProfile = () => {
         setLoading(true);
         setTimeout(() => {
             updateProfile(formData);
+            updateOfficer(user?.id, formData);
             setLoading(false);
             toast.success('Officer profile updated!');
         }, 800);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Building2, Briefcase, GraduationCap, ArrowUpRight, LayoutDashboard, Target, TrendingUp } from 'lucide-react';
+import { Users, Building2, Briefcase, GraduationCap, ArrowUpRight, LayoutDashboard, Target, TrendingUp, ShieldCheck } from 'lucide-react';
 import { Card } from '../../components/UI';
 import { useData } from '../../context/DataContext';
 import {
@@ -8,7 +8,7 @@ import {
 } from 'recharts';
 
 const AdminDashboard = () => {
-    const { jobs, students } = useData();
+    const { jobs, students, employers, officers } = useData();
 
     const chartData = [
         { name: 'CSE', placed: students.filter(s => s.dept === 'CSE' && s.status === 'Placed').length, total: students.filter(s => s.dept === 'CSE').length },
@@ -20,9 +20,10 @@ const AdminDashboard = () => {
 
     const stats = {
         totalStudents: students.length,
-        activeCompanies: new Set(jobs.map(j => j.company)).size,
+        activeCompanies: employers.length,
         openJobs: jobs.length,
-        placedStudents: students.filter(s => s.status === 'Placed').length
+        placedStudents: students.filter(s => s.status === 'Placed').length,
+        totalOfficers: officers.length
     };
 
     return (
@@ -61,7 +62,7 @@ const AdminDashboard = () => {
                         <div className="p-3 bg-primary-600 text-white rounded-2xl">
                             <Building2 size={24} />
                         </div>
-                        <span className="text-[10px] font-black text-slate-900 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100">Active</span>
+                        <span className="text-[10px] font-black text-slate-900 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100">Verified</span>
                     </div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Partner Companies</p>
                     <p className="text-3xl font-black text-slate-900 mt-1">{stats.activeCompanies}</p>
@@ -70,12 +71,12 @@ const AdminDashboard = () => {
                 <Card className="hover:scale-[1.02] transition-transform">
                     <div className="flex justify-between items-start mb-6">
                         <div className="p-3 bg-indigo-600 text-white rounded-2xl">
-                            <Briefcase size={24} />
+                            <ShieldCheck size={24} />
                         </div>
-                        <span className="text-[10px] font-black text-primary-600 bg-primary-50 px-2.5 py-1 rounded-full border border-primary-100">Live</span>
+                        <span className="text-[10px] font-black text-primary-600 bg-primary-50 px-2.5 py-1 rounded-full border border-primary-100">Staff</span>
                     </div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Global Openings</p>
-                    <p className="text-3xl font-black text-slate-900 mt-1">{stats.openJobs}</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Officers</p>
+                    <p className="text-3xl font-black text-slate-900 mt-1">{stats.totalOfficers}</p>
                 </Card>
 
                 <Card className="hover:scale-[1.02] transition-transform">

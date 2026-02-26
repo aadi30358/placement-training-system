@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, GraduationCap, Briefcase, FileCode, Upload, Save, Plus, X, Globe, ExternalLink, AlertCircle } from 'lucide-react';
 import { Card, Button, Input } from '../../components/UI';
 import { useAuth } from '../../context/AuthContext';
+import { useData } from '../../context/DataContext';
 import toast from 'react-hot-toast';
 
 const Profile = () => {
@@ -69,8 +70,11 @@ const Profile = () => {
 
         setTimeout(() => {
             updateProfile(formData);
+            if (user?.id) {
+                updateStudent(user.id, formData); // Call updateStudent
+            }
             setLoading(false);
-            toast.success('Profile updated successfully!');
+            toast.success('Profile saved & synced with campus database!'); // Updated toast message
         }, 800);
     };
 

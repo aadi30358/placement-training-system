@@ -5,8 +5,7 @@ import { useData } from '../../context/DataContext';
 import toast from 'react-hot-toast';
 
 const PlacementRecords = () => {
-    const dataContext = useData();
-    const students = dataContext?.students || [];
+    const { students, jobs } = useData();
 
     const [filterDept, setFilterDept] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
@@ -27,14 +26,17 @@ const PlacementRecords = () => {
         const headers = ['Student Name', 'Roll Number', 'Department', 'Status', 'Company', 'Package'];
         const csvContent = [
             headers.join(','),
-            ...filteredStudents.map(s => [
-                `"${s.name}"`,
-                `"${s.roll}"`,
-                `"${s.dept}"`,
-                `"${s.status}"`,
-                `"${s.company || 'N/A'}"`,
-                `"${s.company ? '8.4 LPA' : 'N/A'}"`
-            ].join(','))
+            ...filteredStudents.map(s => {
+                const job = jobs.find(j => j.company === s.company);
+                return [
+                    `"${s.name}"`,
+                    `"${s.roll}"`,
+                    `"${s.dept}"`,
+                    `"${s.status}"`,
+                    `"${s.company || 'N/A'}"`,
+                    `"${job?.salary || (s.company ? '8.4 LPA' : 'N/A')}"`
+                ].join(',');
+            })
         ].join('\n');
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -135,7 +137,7 @@ const PlacementRecords = () => {
                                         )}
                                     </td>
                                     <td className="px-6 py-4 text-sm font-bold text-slate-700">
-                                        {student.company ? '8.4 LPA' : '—'}
+                                        {student.company ? (jobs.find(j => j.company === student.company)?.salary || '8.4 LPA') : '—'}
                                     </td>
                                 </tr>
                             )) : (

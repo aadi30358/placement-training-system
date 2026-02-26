@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { NavLink, useNavigate, useLocation, Navigate, Outlet } from 'react-router-dom';
 import {
     LayoutDashboard,
     Users,
@@ -13,6 +13,7 @@ import {
     User
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 
 const SidebarItem = ({ to, icon: Icon, label }) => (
     <NavLink
@@ -98,19 +99,58 @@ export const Sidebar = ({ role }) => {
 
 export const Navbar = ({ role }) => {
     const { user } = useAuth();
+    const { notifications, markNotificationAsRead } = useData();
+    const [showNotifs, setShowNotifs] = useState(false);
+
+    const userNotifs = notifications.filter(n => n.userId === user?.id);
+    const unreadCount = userNotifs.filter(n => !n.read).length;
 
     return (
         <header className="h-20 fixed top-0 right-0 left-64 bg-white/90 backdrop-blur-xl border-b border-slate-100 flex items-center justify-between px-10 z-10">
             <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-primary-600 rounded-full animate-pulse capitalize"></div>
-                <span className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">{role} Workspace</span>
+                <span className="px-3 py-1 bg-primary-50 text-primary-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-primary-100 italic">
+                    {role} Level
+                </span>
             </div>
 
             <div className="flex items-center gap-6">
-                <button className="p-2.5 text-slate-400 hover:bg-slate-50 rounded-xl relative transition-all border border-transparent hover:border-slate-100">
-                    <Bell size={20} />
-                    <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary-600 rounded-full border-2 border-white"></span>
-                </button>
+                <div className="relative">
+                    <button
+                        className="p-2.5 text-slate-400 hover:bg-slate-50 rounded-xl relative transition-all border border-transparent hover:border-slate-100"
+                        onClick={() => setShowNotifs(!showNotifs)}
+                    >
+                        <Bell size={20} />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary-600 rounded-full border-2 border-white"></span>
+                        )}
+                    </button>
+
+                    {showNotifs && (
+                        <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-100 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-50">
+                                <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Notifications</h4>
+                                <span className="text-[10px] font-black text-primary-600 whitespace-nowrap">{unreadCount} New</span>
+                            </div>
+                            <div className="max-h-64 overflow-y-auto space-y-2 scrollbar-none">
+                                {userNotifs.length > 0 ? userNotifs.map(n => (
+                                    <div
+                                        key={n.id}
+                                        className={`p-3 rounded-xl border transition-all cursor-pointer ${n.read ? 'bg-white border-slate-50 opacity-60' : 'bg-primary-50/30 border-primary-50'}`}
+                                        onClick={() => {
+                                            markNotificationAsRead(n.id);
+                                            setShowNotifs(false);
+                                        }}
+                                    >
+                                        <p className="text-xs font-bold text-slate-800 leading-snug">{n.message}</p>
+                                        <p className="text-[9px] text-slate-400 mt-1 font-medium">{new Date(n.date).toLocaleTimeString()}</p>
+                                    </div>
+                                )) : (
+                                    <p className="text-center py-6 text-slate-400 text-xs font-medium italic">All caught up!</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
 
                 <div className="flex items-center gap-4 pl-6 border-l border-slate-100">
                     <div className="text-right hidden sm:block">

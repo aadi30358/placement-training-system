@@ -37,6 +37,49 @@ const ApplicantManagement = () => {
         toast.success(`Applicant status updated to ${newStatus}`);
     };
 
+    const handleExport = () => {
+        if (enrichedApps.length === 0) {
+            toast.error('No applicants to export');
+            return;
+        }
+
+        const headers = ['Candidate Name', 'Dept', 'Roll Number', 'Applied Role', 'Date', 'Status', 'CGPA'];
+        const csvContent = [
+            headers.join(','),
+            ...enrichedApps.map(app => [
+                `"${app.student?.name}"`,
+                `"${app.student?.dept}"`,
+                `"${app.student?.roll}"`,
+                `"${app.job?.title}"`,
+                `"${app.appliedDate}"`,
+                `"${app.status}"`,
+                `"${app.student?.cgpa}"`
+            ].join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `applicants_${companyName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Applicant list exported successfully');
+    };
+
+    const handleDownloadResume = (student) => {
+        const dummyContent = `Resume for ${student.name}\nRoll: ${student.roll}\nDept: ${student.dept}\nCGPA: ${student.cgpa}\nSkills: ${(student.skills || ['React', 'Node.js', 'Python']).join(', ')}`;
+        const blob = new Blob([dummyContent], { type: 'text/plain' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${student.name.replace(/\s+/g, '_')}_Resume.txt`);
+        link.click();
+        toast.success(`Downloading ${student.name}'s resume...`);
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -44,7 +87,7 @@ const ApplicantManagement = () => {
                     <h1 className="text-2xl font-bold text-slate-900">Applicant Tracking</h1>
                     <p className="text-slate-500">Review candidates for recruitment at {companyName}.</p>
                 </div>
-                <Button variant="secondary" className="flex items-center gap-2 font-bold" onClick={() => toast.success('Exporting list...')}>
+                <Button variant="secondary" className="flex items-center gap-2 font-bold" onClick={handleExport}>
                     <Download size={18} />
                     <span>Export List</span>
                 </Button>
@@ -180,7 +223,7 @@ const ApplicantManagement = () => {
                             <div>
                                 <p className="text-sm font-bold text-slate-900 mb-2">Technical Skills</p>
                                 <div className="flex flex-wrap gap-2">
-                                    {['React', 'Node.js', 'Python', 'SQL'].map(skill => (
+                                    {(selectedStudent.skills || ['React', 'Node.js', 'Python']).map(skill => (
                                         <span key={skill} className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600">
                                             {skill}
                                         </span>
@@ -189,7 +232,7 @@ const ApplicantManagement = () => {
                             </div>
 
                             <div className="pt-4 border-t border-slate-100 flex gap-3">
-                                <Button className="flex-1" onClick={() => toast.success('Resume downloaded!')}>Download Resume</Button>
+                                <Button className="flex-1" onClick={() => handleDownloadResume(selectedStudent)}>Download Resume</Button>
                                 <Button variant="secondary" onClick={() => setSelectedStudent(null)}>Close</Button>
                             </div>
                         </div>

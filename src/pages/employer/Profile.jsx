@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Building2, Mail, Globe, MapPin, Save, Info, Briefcase, Phone } from 'lucide-react';
 import { Card, Button, Input } from '../../components/UI';
 import { useAuth } from '../../context/AuthContext';
+import { useData } from '../../context/DataContext';
 import toast from 'react-hot-toast';
 
 const EmployerProfile = () => {
@@ -28,6 +29,7 @@ const EmployerProfile = () => {
         setLoading(true);
         setTimeout(() => {
             updateProfile(formData);
+            updateEmployer(user?.id, formData);
             setLoading(false);
             toast.success('Company profile updated!');
         }, 800);

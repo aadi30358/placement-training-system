@@ -25,112 +25,214 @@ const Table = ({ headers, children }) => (
 );
 
 const UserManagement = () => {
-    const { students, deleteStudent, updateStudent } = useData();
+    const {
+        students, deleteStudent, updateStudent, addStudent,
+        employers, deleteEmployer, updateEmployer, addEmployer,
+        officers, deleteOfficer, updateOfficer, addOfficer,
+        jobs, deleteJob, updateJob
+    } = useData();
+
+    const [activeTab, setActiveTab] = useState('Students');
     const [searchTerm, setSearchTerm] = useState('');
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-    const filteredStudents = students.filter(s =>
-        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.roll.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Unified form state for the modal
+    const [formData, setFormData] = useState({});
 
-    const handleDelete = (id) => {
-        if (window.confirm('Are you sure you want to delete this student?')) {
-            deleteStudent(id);
-            toast.success('Student record deleted');
+    const tabs = ['Students', 'Employers', 'Officers', 'Jobs'];
+
+    const filteredData = () => {
+        const query = searchTerm.toLowerCase();
+        switch (activeTab) {
+            case 'Students':
+                return students.filter(s => s.name.toLowerCase().includes(query) || s.roll?.toLowerCase().includes(query));
+            case 'Employers':
+                return employers.filter(e => e.company.toLowerCase().includes(query) || e.name.toLowerCase().includes(query));
+            case 'Officers':
+                return officers.filter(o => o.name.toLowerCase().includes(query));
+            case 'Jobs':
+                return jobs.filter(j => j.title.toLowerCase().includes(query) || j.company.toLowerCase().includes(query));
+            default:
+                return [];
         }
     };
 
-    const handleEdit = (student) => {
-        const newName = prompt('Enter new name:', student.name);
-        if (newName) {
-            updateStudent(student.id, { name: newName });
-            toast.success('Profile updated');
+    const handleAdd = (e) => {
+        e.preventDefault();
+        try {
+            if (activeTab === 'Students') addStudent(formData);
+            else if (activeTab === 'Employers') addEmployer(formData);
+            else if (activeTab === 'Officers') addOfficer(formData);
+
+            toast.success(`${activeTab.slice(0, -1)} added successfully`);
+            setIsAddModalOpen(false);
+            setFormData({});
+        } catch (err) {
+            toast.error('Error adding record');
+        }
+    };
+
+    const handleDelete = (id) => {
+        if (window.confirm(`Delete this ${activeTab.slice(0, -1)}?`)) {
+            if (activeTab === 'Students') deleteStudent(id);
+            else if (activeTab === 'Employers') deleteEmployer(id);
+            else if (activeTab === 'Officers') deleteOfficer(id);
+            else if (activeTab === 'Jobs') deleteJob(id);
+            toast.success('Record deleted');
         }
     };
 
     const getStatusBadge = (status) => {
         const styles = {
             'Placed': 'bg-emerald-50 text-emerald-700 border-emerald-100',
-            'Not Placed': 'bg-slate-50 text-slate-700 border-slate-100',
             'Pending': 'bg-amber-50 text-amber-700 border-amber-100',
+            'Active': 'bg-primary-50 text-primary-700 border-primary-100',
         };
-        return (
-            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${styles[status]}`}>
-                {status}
-            </span>
-        );
+        return <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${styles[status] || styles['Pending']}`}>{status}</span>;
     };
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">User Management</h1>
-                    <p className="text-slate-500">Manage student profiles, roles, and records.</p>
+                    <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase">System Control Center</h1>
+                    <p className="text-slate-500 text-sm font-medium">Manage all platform entities and operational data.</p>
                 </div>
-                <Button className="flex items-center gap-2">
-                    <Plus size={18} />
-                    <span>Add New User</span>
-                </Button>
+                {activeTab !== 'Jobs' && (
+                    <Button className="flex items-center gap-2" onClick={() => { setFormData({}); setIsAddModalOpen(true); }}>
+                        <Plus size={18} />
+                        <span>Add {activeTab.slice(0, -1)}</span>
+                    </Button>
+                )}
+            </div>
+
+            <div className="flex gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
+                {tabs.map(tab => (
+                    <button
+                        key={tab}
+                        onClick={() => { setActiveTab(tab); setSearchTerm(''); }}
+                        className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+                            }`}
+                    >
+                        {tab}
+                    </button>
+                ))}
             </div>
 
             <Card>
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="flex gap-4 mb-6">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Search by name or roll number..."
-                            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                            placeholder={`Search ${activeTab.toLowerCase()}...`}
+                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none font-medium transition-all"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="flex gap-2">
-                        <Button variant="secondary" className="flex items-center gap-2">
-                            <Filter size={18} />
-                            <span>Filter</span>
-                        </Button>
-                    </div>
                 </div>
 
-                <Table headers={['Student Name', 'Roll Number', 'Dept', 'CGPA', 'Status', 'Company']}>
-                    {filteredStudents.map((student) => (
-                        <tr key={student.id} className="hover:bg-slate-50 transition-colors group">
-                            <td className="px-6 py-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold text-xs uppercase">
-                                        {student.name.charAt(0)}
-                                    </div>
-                                    <span className="font-medium text-slate-900">{student.name}</span>
-                                </div>
-                            </td>
-                            <td className="px-6 py-4 text-slate-600">{student.roll}</td>
-                            <td className="px-6 py-4">
-                                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs font-bold uppercase">{student.dept}</span>
-                            </td>
-                            <td className="px-6 py-4 font-semibold text-slate-700">{student.cgpa}</td>
-                            <td className="px-6 py-4">{getStatusBadge(student.status)}</td>
-                            <td className="px-6 py-4 text-slate-600">{student.company || '—'}</td>
-                            <td className="px-6 py-4 text-right">
-                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => handleEdit(student)} className="p-1 text-slate-400 hover:text-primary-600 transition-all"><Edit2 size={16} /></button>
-                                    <button onClick={() => handleDelete(student.id)} className="p-1 text-slate-400 hover:text-red-600 transition-all"><Trash2 size={16} /></button>
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
-                </Table>
+                {activeTab === 'Students' && (
+                    <Table headers={['Student Name', 'Roll Number', 'Dept', 'CGPA', 'Status']}>
+                        {filteredData().map(s => (
+                            <tr key={s.id} className="group hover:bg-slate-50/50">
+                                <td className="px-6 py-4 font-bold text-slate-900">{s.name}</td>
+                                <td className="px-6 py-4 text-slate-500 font-medium">{s.roll}</td>
+                                <td className="px-6 py-4"><span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-black">{s.dept}</span></td>
+                                <td className="px-6 py-4 font-bold text-slate-900">{s.cgpa}</td>
+                                <td className="px-6 py-4">{getStatusBadge(s.status)}</td>
+                                <td className="px-6 py-4 text-right">
+                                    <button onClick={() => handleDelete(s.id)} className="p-2 text-slate-300 hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+                                </td>
+                            </tr>
+                        ))}
+                    </Table>
+                )}
 
-                {filteredStudents.length === 0 && (
-                    <div className="py-12 text-center">
-                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-dashed border-slate-300">
-                            <Clock className="text-slate-300" size={32} />
-                        </div>
-                        <p className="text-slate-500 font-medium">No results found matching your search</p>
-                    </div>
+                {activeTab === 'Employers' && (
+                    <Table headers={['Company', 'HR Name', 'Industry', 'Location', 'Status']}>
+                        {filteredData().map(e => (
+                            <tr key={e.id} className="group hover:bg-slate-50/50">
+                                <td className="px-6 py-4 font-bold text-slate-900">{e.company}</td>
+                                <td className="px-6 py-4 text-slate-500 font-medium">{e.name}</td>
+                                <td className="px-6 py-4 font-medium text-slate-600">{e.industry}</td>
+                                <td className="px-6 py-4 text-slate-500">{e.location}</td>
+                                <td className="px-6 py-4">{getStatusBadge('Active')}</td>
+                                <td className="px-6 py-4 text-right">
+                                    <button onClick={() => handleDelete(e.id)} className="p-2 text-slate-300 hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+                                </td>
+                            </tr>
+                        ))}
+                    </Table>
+                )}
+
+                {activeTab === 'Officers' && (
+                    <Table headers={['Officer Name', 'Departments', 'Email', 'Role']}>
+                        {filteredData().map(o => (
+                            <tr key={o.id} className="group hover:bg-slate-50/50">
+                                <td className="px-6 py-4 font-bold text-slate-900">{o.name}</td>
+                                <td className="px-6 py-4"><div className="flex gap-1">{o.depts?.map(d => <span key={d} className="px-2 py-0.5 bg-primary-50 text-primary-600 rounded text-[10px] font-black">{d}</span>)}</div></td>
+                                <td className="px-6 py-4 text-slate-500 uppercase text-[10px] font-black">{o.email}</td>
+                                <td className="px-6 py-4 font-medium text-slate-600">{o.role || 'Placement Officer'}</td>
+                                <td className="px-6 py-4 text-right">
+                                    <button onClick={() => handleDelete(o.id)} className="p-2 text-slate-300 hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+                                </td>
+                            </tr>
+                        ))}
+                    </Table>
+                )}
+
+                {activeTab === 'Jobs' && (
+                    <Table headers={['Job Title', 'Company', 'Applicants', 'Type', 'Deadline']}>
+                        {filteredData().map(j => (
+                            <tr key={j.id} className="group hover:bg-slate-50/50">
+                                <td className="px-6 py-4 font-bold text-slate-900">{j.title}</td>
+                                <td className="px-6 py-4 font-black text-primary-600 uppercase text-[10px]">{j.company}</td>
+                                <td className="px-6 py-4 text-slate-500 font-medium">Recently Active</td>
+                                <td className="px-6 py-4"><span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-black">{j.type}</span></td>
+                                <td className="px-6 py-4 text-slate-400 font-bold text-[10px]">{j.deadline}</td>
+                                <td className="px-6 py-4 text-right">
+                                    <button onClick={() => handleDelete(j.id)} className="p-2 text-slate-300 hover:text-red-500 transition-all"><Trash2 size={16} /></button>
+                                </td>
+                            </tr>
+                        ))}
+                    </Table>
                 )}
             </Card>
+
+            {isAddModalOpen && (activeTab === 'Students' || activeTab === 'Employers' || activeTab === 'Officers') && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <Card className="max-w-md w-full" title={`Add New ${activeTab.slice(0, -1)}`}>
+                        <form onSubmit={handleAdd} className="space-y-4">
+                            {activeTab === 'Students' && (
+                                <>
+                                    <Input label="Student Name" required onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                    <Input label="Roll Number" required onChange={e => setFormData({ ...formData, roll: e.target.value })} />
+                                    <Input label="Department" placeholder="e.g. CSE" onChange={e => setFormData({ ...formData, dept: e.target.value })} />
+                                </>
+                            )}
+                            {activeTab === 'Employers' && (
+                                <>
+                                    <Input label="Company Name" required onChange={e => setFormData({ ...formData, company: e.target.value })} />
+                                    <Input label="HR Lead Name" required onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                    <Input label="Industry" onChange={e => setFormData({ ...formData, industry: e.target.value })} />
+                                </>
+                            )}
+                            {activeTab === 'Officers' && (
+                                <>
+                                    <Input label="Officer Name" required onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                    <Input label="Official Email" type="email" required onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                </>
+                            )}
+                            <div className="flex gap-3 pt-4">
+                                <Button type="submit" className="flex-1 uppercase font-black tracking-widest text-[10px]">Create Account</Button>
+                                <Button variant="secondary" type="button" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
+                            </div>
+                        </form>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 };
