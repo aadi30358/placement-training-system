@@ -20,7 +20,11 @@ export const AuthProvider = ({ children }) => {
     };
 
     const updateProfile = (profileData) => {
-        const updatedUser = { ...user, ...profileData };
+        const updatedUser = {
+            ...user,
+            ...profileData,
+            isProfileComplete: true // Flag as complete when they save their profile
+        };
         setUser(updatedUser);
         localStorage.setItem('pts_user', JSON.stringify(updatedUser));
     };

@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { Search, Filter, Plus, Edit2, Trash2, MoreVertical, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { Button, Input, Card } from '../../components/UI';
-import { STUDENTS } from '../../data/mockData';
+import { useData } from '../../context/DataContext';
+import toast from 'react-hot-toast';
 
 const Table = ({ headers, children }) => (
-    <div className="w-full overflow-x-auto rounded-xl border border-slate-100">
+    <div className="w-full overflow-x-auto rounded-xl border border-slate-100 shadow-sm">
         <table className="w-full text-left border-collapse">
             <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
                     {headers.map((header, i) => (
-                        <th key={i} className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        <th key={i} className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                             {header}
                         </th>
                     ))}
@@ -24,12 +25,28 @@ const Table = ({ headers, children }) => (
 );
 
 const UserManagement = () => {
+    const { students, deleteStudent, updateStudent } = useData();
     const [searchTerm, setSearchTerm] = useState('');
 
-    const filteredStudents = STUDENTS.filter(s =>
+    const filteredStudents = students.filter(s =>
         s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.roll.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const handleDelete = (id) => {
+        if (window.confirm('Are you sure you want to delete this student?')) {
+            deleteStudent(id);
+            toast.success('Student record deleted');
+        }
+    };
+
+    const handleEdit = (student) => {
+        const newName = prompt('Enter new name:', student.name);
+        if (newName) {
+            updateStudent(student.id, { name: newName });
+            toast.success('Profile updated');
+        }
+    };
 
     const getStatusBadge = (status) => {
         const styles = {
@@ -97,8 +114,8 @@ const UserManagement = () => {
                             <td className="px-6 py-4 text-slate-600">{student.company || '—'}</td>
                             <td className="px-6 py-4 text-right">
                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button className="p-1 text-slate-400 hover:text-primary-600 transition-all"><Edit2 size={16} /></button>
-                                    <button className="p-1 text-slate-400 hover:text-red-600 transition-all"><Trash2 size={16} /></button>
+                                    <button onClick={() => handleEdit(student)} className="p-1 text-slate-400 hover:text-primary-600 transition-all"><Edit2 size={16} /></button>
+                                    <button onClick={() => handleDelete(student.id)} className="p-1 text-slate-400 hover:text-red-600 transition-all"><Trash2 size={16} /></button>
                                 </div>
                             </td>
                         </tr>

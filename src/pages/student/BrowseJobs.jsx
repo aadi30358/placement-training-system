@@ -128,9 +128,17 @@ const BrowseJobs = () => {
                                     <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center group-hover:bg-primary-50 transition-colors">
                                         <Briefcase className="text-slate-400 group-hover:text-primary-600" size={24} />
                                     </div>
-                                    <span className="px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold uppercase rounded">
-                                        {job.type}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {job.postedAt && (new Date() - new Date(job.postedAt)) < 24 * 60 * 60 * 1000 && (
+                                            <span className="px-2 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase rounded flex items-center gap-1">
+                                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                                                New
+                                            </span>
+                                        )}
+                                        <span className="px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold uppercase rounded">
+                                            {job.type}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-primary-600 transition-colors">

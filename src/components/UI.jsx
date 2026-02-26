@@ -39,12 +39,12 @@ export const Input = ({ label, error, className = '', ...props }) => (
 );
 
 export const Card = ({ children, title, subtitle, className = '', headerAction }) => (
-    <div className={`bg-white rounded-xl shadow-sm border border-slate-100 p-6 ${className}`}>
+    <div className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-6 ${className}`}>
         {(title || subtitle || headerAction) && (
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    {title && <h3 className="text-lg font-semibold text-slate-900">{title}</h3>}
-                    {subtitle && <p className="text-sm text-slate-500">{subtitle}</p>}
+                    {title && <h3 className="text-xl font-bold text-slate-900">{title}</h3>}
+                    {subtitle && <p className="text-sm text-slate-500 font-medium">{subtitle}</p>}
                 </div>
                 {headerAction}
             </div>

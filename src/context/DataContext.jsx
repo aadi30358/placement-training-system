@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { JOBS as INITIAL_JOBS, APPLICATIONS as INITIAL_APPLICATIONS } from '../data/mockData';
+import { JOBS as INITIAL_JOBS, APPLICATIONS as INITIAL_APPLICATIONS, STUDENTS as INITIAL_STUDENTS } from '../data/mockData';
 import { useAuth } from './AuthContext';
 
 const DataContext = createContext();
@@ -17,6 +17,11 @@ export const DataProvider = ({ children }) => {
         return savedApps ? JSON.parse(savedApps) : INITIAL_APPLICATIONS;
     });
 
+    const [students, setStudents] = useState(() => {
+        const savedStudents = localStorage.getItem('pts_students');
+        return savedStudents ? JSON.parse(savedStudents) : INITIAL_STUDENTS;
+    });
+
     useEffect(() => {
         localStorage.setItem('pts_jobs', JSON.stringify(jobs));
     }, [jobs]);
@@ -24,6 +29,10 @@ export const DataProvider = ({ children }) => {
     useEffect(() => {
         localStorage.setItem('pts_applications', JSON.stringify(applications));
     }, [applications]);
+
+    useEffect(() => {
+        localStorage.setItem('pts_students', JSON.stringify(students));
+    }, [students]);
 
     const applyForJob = (jobId) => {
         if (!user) return false;
@@ -56,13 +65,49 @@ export const DataProvider = ({ children }) => {
             }));
     };
 
+    const addJob = (jobData) => {
+        const newJob = {
+            ...jobData,
+            id: Date.now(),
+            postedAt: new Date().toISOString()
+        };
+        setJobs(prev => [newJob, ...prev]);
+        return true;
+    };
+
+    const updateApplicationStatus = (appId, newStatus) => {
+        setApplications(prev => prev.map(app =>
+            app.id === appId ? { ...app, status: newStatus } : app
+        ));
+    };
+
+    const updateStudent = (id, data) => {
+        setStudents(prev => prev.map(s => s.id === id ? { ...s, ...data } : s));
+    };
+
+    const deleteStudent = (id) => {
+        setStudents(prev => prev.filter(s => s.id !== id));
+    };
+
+    const addStudent = (data) => {
+        const newStudent = { ...data, id: Date.now() };
+        setStudents(prev => [newStudent, ...prev]);
+    };
+
     const value = {
         jobs,
         applications,
+        students,
         applyForJob,
         getStudentApplications,
+        addJob,
+        updateApplicationStatus,
+        updateStudent,
+        deleteStudent,
+        addStudent,
         setJobs,
-        setApplications
+        setApplications,
+        setStudents
     };
 
     return (

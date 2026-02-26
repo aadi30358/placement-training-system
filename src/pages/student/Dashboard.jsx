@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Briefcase, CheckCircle2, Clock, ArrowRight, Star } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Briefcase, CheckCircle2, Clock, ArrowRight, Search, MapPin, Sparkles } from 'lucide-react';
 import { Card, Button } from '../../components/UI';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -9,6 +9,7 @@ const StudentDashboard = () => {
     const { jobs, getStudentApplications } = useData();
     const { user } = useAuth();
     const navigate = useNavigate();
+    const [searchQuery, setSearchQuery] = useState('');
 
     const appliedJobs = useMemo(() => {
         return getStudentApplications(user?.id);
@@ -22,19 +23,6 @@ const StudentDashboard = () => {
         };
     }, [appliedJobs]);
 
-    const recommendedJobs = useMemo(() => {
-        // Simple recommendation logic: jobs matching user skills or random if no skills
-        if (!user?.skills || user.skills.length === 0) return jobs.slice(0, 2);
-
-        return jobs
-            .filter(job =>
-                !appliedJobs.find(app => app.jobId === job.id) &&
-                (user.skills.some(skill => job.title.toLowerCase().includes(skill.toLowerCase())) ||
-                    user.dept === job.eligibility.split(' ')[0])
-            )
-            .slice(0, 2);
-    }, [jobs, user, appliedJobs]);
-
     const profileCompletion = useMemo(() => {
         const fields = ['phone', 'dob', 'skills', 'resumeUrl', 'class10', 'class12'];
         const completed = fields.filter(f => !!user?.[f]).length;
@@ -42,108 +30,188 @@ const StudentDashboard = () => {
     }, [user]);
 
     return (
-        <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Welcome Back, {user?.name?.split(' ')[0]}!</h1>
-                    <p className="text-slate-500">Track your applications and discover new opportunities.</p>
+        <div className="space-y-10 pb-10">
+            {/* Hero Section: Job Finder Style */}
+            <div className="relative bg-[#f8faff] rounded-[2rem] p-8 md:p-14 overflow-hidden border border-slate-100">
+                {/* Decorative Stripes */}
+                <div className="absolute right-0 top-0 h-full w-1/3 opacity-10 pointer-events-none overflow-hidden">
+                    {[...Array(20)].map((_, i) => (
+                        <div
+                            key={i}
+                            className="bg-primary-600 h-[2px] w-[200%] absolute origin-left rotate-[-45deg]"
+                            style={{ top: `${i * 30}px`, left: '-50%' }}
+                        />
+                    ))}
                 </div>
-                <div className="flex items-center gap-4 bg-white p-2 rounded-xl border border-slate-100 shadow-sm">
-                    <div className="flex -space-x-2">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200" />
-                        ))}
+
+                <div className="relative z-10 max-w-2xl">
+                    <div className="flex items-center gap-2 mb-6">
+                        <span className="px-3 py-1 bg-white text-primary-600 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm border border-primary-50">New Opportunities</span>
                     </div>
-                    <span className="text-sm font-medium text-slate-600">45 new jobs posted this week</span>
+                    <h1 className="text-4xl md:text-6xl font-black text-slate-900 leading-[1.1] mb-6 tracking-tight">
+                        Find the most <br />
+                        <span className="text-primary-600 underline decoration-primary-200 underline-offset-8">exciting</span> startup jobs
+                    </h1>
+
+                    <div className="flex flex-col md:flex-row items-center gap-3 bg-white p-2 rounded-2xl shadow-xl shadow-primary-900/5 group border border-slate-100">
+                        <div className="flex-1 flex items-center gap-3 px-4 w-full">
+                            <Search className="text-slate-400 group-focus-within:text-primary-600 transition-colors" size={20} />
+                            <input
+                                type="text"
+                                placeholder="Job title or keywords..."
+                                className="w-full py-3 outline-none text-slate-900 font-bold placeholder:text-slate-300 placeholder:font-medium"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                        <div className="hidden md:block w-[1px] h-8 bg-slate-100 mx-2"></div>
+                        <div className="flex-1 flex items-center gap-3 px-4 w-full">
+                            <MapPin className="text-slate-400" size={20} />
+                            <select className="w-full py-3 bg-transparent outline-none text-slate-600 font-bold">
+                                <option>Location (All)</option>
+                                <option>Remote</option>
+                                <option>On-site</option>
+                            </select>
+                        </div>
+                        <Button
+                            className="w-full md:w-auto px-10 py-4 rounded-xl shadow-lg shadow-primary-500/20"
+                            onClick={() => navigate('/student/jobs')}
+                        >
+                            Find Job
+                        </Button>
+                    </div>
+
+                    <div className="flex items-center gap-6 mt-10">
+                        <div className="flex -space-x-3">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400 capitalize">U{i}</div>
+                            ))}
+                        </div>
+                        <p className="text-xs font-bold text-slate-500">
+                            <span className="text-slate-900">4,500+</span> companies are hiring this week
+                        </p>
+                    </div>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-6">
-                    <Card title="Quick Stats">
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="p-4 bg-blue-50 rounded-xl">
-                                <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">Applied</p>
-                                <p className="text-2xl font-bold text-blue-900">{stats.applied}</p>
+                <div className="lg:col-span-2 space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Card className="hover:scale-[1.02] transition-transform">
+                            <div className="w-10 h-10 bg-primary-50 text-primary-600 rounded-xl flex items-center justify-center mb-4">
+                                <Briefcase size={20} />
                             </div>
-                            <div className="p-4 bg-emerald-50 rounded-xl">
-                                <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Shortlisted</p>
-                                <p className="text-2xl font-bold text-emerald-900">{stats.shortlisted}</p>
+                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Applied</p>
+                            <p className="text-3xl font-black text-slate-900">{stats.applied}</p>
+                        </Card>
+                        <Card className="hover:scale-[1.02] transition-transform">
+                            <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-4">
+                                <CheckCircle2 size={20} />
                             </div>
-                            <div className="p-4 bg-purple-50 rounded-xl">
-                                <p className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-1">Offers</p>
-                                <p className="text-2xl font-bold text-purple-900">{stats.offers}</p>
+                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Success</p>
+                            <p className="text-3xl font-black text-slate-900">{stats.shortlisted + stats.offers}</p>
+                        </Card>
+                        <Card className="hover:scale-[1.02] transition-transform">
+                            <div className="w-10 h-10 bg-slate-50 text-slate-600 rounded-xl flex items-center justify-center mb-4">
+                                <Clock size={20} />
                             </div>
-                        </div>
-                    </Card>
+                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Pending</p>
+                            <p className="text-3xl font-black text-slate-900">{stats.applied - (stats.shortlisted + stats.offers)}</p>
+                        </Card>
+                    </div>
 
-                    <Card title="Recent Applications">
+                    <Card title="Track Your Progress" subtitle="Latest status from recruitment partners">
                         <div className="space-y-4">
                             {appliedJobs.length > 0 ? appliedJobs.slice(0, 5).map((app) => (
-                                <div key={app.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-50 hover:bg-slate-50 transition-colors">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-white rounded-lg border border-slate-200 flex items-center justify-center">
-                                            <Briefcase className="text-slate-400" size={24} />
+                                <div key={app.id} className="group flex items-center justify-between p-5 rounded-2xl border border-slate-50 hover:bg-[#f8faff] hover:border-primary-100 transition-all cursor-pointer">
+                                    <div className="flex items-center gap-5">
+                                        <div className="w-14 h-14 bg-white rounded-2xl border border-slate-100 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                            <div className="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center text-primary-600 font-black text-sm uppercase">
+                                                {app.job?.company?.charAt(0)}
+                                            </div>
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-slate-900">{app.job?.title || 'Unknown Role'}</h4>
-                                            <p className="text-sm text-slate-500">{app.job?.company || 'Unknown Company'} • Applied on {app.appliedDate}</p>
+                                            <h4 className="font-black text-slate-900 group-hover:text-primary-600 transition-colors uppercase text-sm tracking-tight">{app.job?.title || 'Unknown Role'}</h4>
+                                            <p className="text-xs text-slate-400 font-bold mt-0.5">{app.job?.company || 'Unknown Company'} • {app.appliedDate}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${app.status === 'Selected' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                                app.status === 'Shortlisted' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                                    app.status === 'Rejected' ? 'bg-red-50 text-red-700 border-red-100' :
-                                                        'bg-slate-50 text-slate-700 border-slate-100'
+                                    <div className="flex items-center gap-6">
+                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm ${app.status === 'Selected' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                app.status === 'Shortlisted' ? 'bg-primary-50 text-primary-700 border-primary-100' :
+                                                    app.status === 'Rejected' ? 'bg-slate-50 text-slate-500 border-slate-200' :
+                                                        'bg-white text-slate-900 border-slate-100'
                                             }`}>
                                             {app.status}
                                         </span>
-                                        <button className="text-slate-400 hover:text-slate-600" onClick={() => navigate('/student/jobs')}><ArrowRight size={20} /></button>
+                                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 group-hover:bg-primary-600 group-hover:text-white transition-all shadow-sm">
+                                            <ArrowRight size={18} />
+                                        </div>
                                     </div>
                                 </div>
                             )) : (
-                                <div className="text-center py-8">
-                                    <p className="text-slate-400">No applications yet. Start exploring!</p>
-                                    <Button variant="secondary" className="mt-4" onClick={() => navigate('/student/jobs')}>Browse Jobs</Button>
+                                <div className="text-center py-10">
+                                    <p className="text-slate-400 font-bold mb-4">You haven't applied to any jobs yet.</p>
+                                    <Button variant="secondary" onClick={() => navigate('/student/jobs')}>Check Open Jobs</Button>
                                 </div>
                             )}
                         </div>
                     </Card>
                 </div>
 
-                <div className="space-y-6">
-                    <Card title="Recommended for You">
-                        <div className="space-y-4">
-                            {recommendedJobs.map((job) => (
-                                <div key={job.id} className="p-4 rounded-xl border border-slate-100 hover:border-primary-100 hover:bg-primary-50/30 transition-all group">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h4 className="font-bold text-slate-900 group-hover:text-primary-600 transition-colors">{job.title}</h4>
+                <div className="space-y-8">
+                    <Card title="Quick Apply" subtitle="Recent openings shadow-sm">
+                        <div className="space-y-5">
+                            {jobs.slice(0, 3).map((job) => {
+                                const hasApplied = appliedJobs.some(app => app.jobId === job.id);
+                                return (
+                                    <div key={job.id} className="p-5 rounded-2xl border border-slate-100 hover:border-primary-100 hover:bg-[#f8faff] transition-all group">
+                                        <h4 className="font-black text-slate-900 group-hover:text-primary-600 transition-colors text-sm uppercase mb-1">{job.title}</h4>
+                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-4">{job.company}</p>
+
+                                        <div className="flex items-center justify-between mt-auto pt-2">
+                                            <span className="text-xs font-black text-slate-900">{job.salary}</span>
+                                            {hasApplied ? (
+                                                <span className="text-[10px] font-black text-emerald-600 uppercase flex items-center gap-1.5">
+                                                    <CheckCircle2 size={12} /> Applied
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    className="text-[10px] font-black uppercase tracking-widest text-primary-600 hover:text-primary-700 underline underline-offset-4"
+                                                    onClick={() => navigate('/student/jobs')}
+                                                >
+                                                    View Details
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                    <p className="text-sm text-slate-600 mb-4">{job.company} • {job.location}</p>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold text-slate-500 uppercase">{job.salary}</span>
-                                        <Button size="sm" variant="secondary" onClick={() => navigate('/student/jobs')}>View</Button>
-                                    </div>
-                                </div>
-                            ))}
-                            <Button variant="secondary" className="w-full text-sm" onClick={() => navigate('/student/jobs')}>See all recommendations</Button>
+                                );
+                            })}
                         </div>
                     </Card>
 
-                    <Card title="Profile Progress" className="bg-primary-600 text-white border-none shadow-primary-200">
-                        <div className="flex items-center justify-between mb-2">
-                            <p className="text-primary-100 text-sm font-medium">Strength: {profileCompletion}%</p>
-                            <span className="text-xs bg-primary-500 px-2 py-0.5 rounded-full">Good</span>
+                    <Card title="Your Profile" subtitle="Completion score shadow-sm">
+                        <div className="flex items-center justify-center h-40 relative mb-4">
+                            {/* SVG Ring Progress */}
+                            <svg className="w-32 h-32 transform -rotate-90">
+                                <circle className="text-slate-100" strokeWidth="8" stroke="currentColor" fill="transparent" r="58" cx="64" cy="64" />
+                                <circle
+                                    className="text-primary-600 transition-all duration-1000"
+                                    strokeWidth="8"
+                                    strokeDasharray={2 * Math.PI * 58}
+                                    strokeDashoffset={2 * Math.PI * 58 * (1 - profileCompletion / 100)}
+                                    strokeLinecap="round"
+                                    stroke="currentColor"
+                                    fill="transparent"
+                                    r="58" cx="64" cy="64"
+                                />
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="text-3xl font-black text-slate-900 leading-none">{profileCompletion}%</span>
+                                <span className="text-[10px] font-black text-primary-600 uppercase tracking-widest mt-1">Ready</span>
+                            </div>
                         </div>
-                        <div className="w-full h-2 bg-primary-700 rounded-full mb-4 overflow-hidden">
-                            <div className="h-full bg-white rounded-full transition-all duration-500" style={{ width: `${profileCompletion}%` }} />
-                        </div>
-                        <p className="text-primary-50 text-xs mb-6">Complete your profile to get matched with 3x more companies.</p>
-                        <Button
-                            className="w-full bg-white text-primary-600 hover:bg-primary-50"
-                            onClick={() => navigate('/student/profile')}
-                        >
-                            {profileCompletion === 100 ? 'View Profile' : 'Complete Profile'}
+                        <Button className="w-full py-4 text-xs font-black uppercase" onClick={() => navigate('/student/profile')}>
+                            Refine My Resume
                         </Button>
                     </Card>
                 </div>
