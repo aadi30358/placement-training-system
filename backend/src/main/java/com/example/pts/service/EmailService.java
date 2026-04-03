@@ -1,56 +1,48 @@
 package com.example.pts.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 
+import jakarta.mail.internet.MimeMessage;
 import com.example.pts.model.Job;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 
 @Service
 public class EmailService {
 
-    private final String RESEND_API_KEY = "re_BmJA9DxV_Nus5Kh9GPBNgyc46Vnqi79io";
-    private final String FROM_EMAIL = "onboarding@resend.dev";
+    @Autowired
+    private JavaMailSender mailSender;
 
-    private void sendResendEmail(String to, String subject, String htmlBody, String textBody) {
+    private final String fromEmail = "yaswanthadithyareddy11@gmail.com";
+
+    public void sendEmail(String to, String subject, String body) {
         try {
-            RestTemplate restTemplate = new RestTemplate();
-            String url = "https://api.resend.com/emails";
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(RESEND_API_KEY);
-
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("from", "PTS Portal <" + FROM_EMAIL + ">");
-            requestBody.put("to", new String[]{to});
-            requestBody.put("subject", subject);
-            if (htmlBody != null) {
-                requestBody.put("html", htmlBody);
-            } else if (textBody != null) {
-                requestBody.put("text", textBody);
-            }
-
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
-            System.out.println("Resend API response: " + response.getBody());
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(body);
+            message.setFrom(fromEmail);
+            mailSender.send(message);
         } catch (Exception e) {
-            System.err.println("Error sending email via Resend: " + e.getMessage());
+            System.err.println("Error sending email: " + e.getMessage());
         }
     }
 
-    public void sendEmail(String to, String subject, String body) {
-        sendResendEmail(to, subject, null, body);
-    }
-
     public void sendHtmlEmail(String to, String subject, String htmlBody) {
-        sendResendEmail(to, subject, htmlBody, null);
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlBody, true);
+            helper.setFrom(fromEmail);
+            mailSender.send(message);
+        } catch (Exception e) {
+            System.err.println("Error sending HTML email: " + e.getMessage());
+        }
     }
 
     public void sendLoginNotificationEmail(String to, String name, List<Job> jobs, boolean isNewUser) {
