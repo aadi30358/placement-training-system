@@ -169,19 +169,24 @@ public class AuthController {
         String idTokenString = request.get("credential");
         String requestedRole = request.get("role");
 
-        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
-                .setAudience(Collections.singletonList(googleClientId))
-                .setAcceptableTimeSkewSeconds(300) // 5 minutes clock skew tolerance
-                .build();
-
         try {
-            GoogleIdToken idToken = verifier.verify(idTokenString);
-            if (idToken != null) {
-                GoogleIdToken.Payload payload = idToken.getPayload();
-                String email = payload.getEmail();
+            org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+            String url = "https://oauth2.googleapis.com/tokeninfo?id_token=" + idTokenString;
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> payload = response.getBody();
+                
+                // Optional: Verify audience (client ID)
+                String aud = (String) payload.get("aud");
+                if (!googleClientId.equals(aud)) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Audience. Expected " + googleClientId + " but got " + aud);
+                }
+
+                String email = (String) payload.get("email");
                 String name = (String) payload.get("name");
 
-                Optional<AppUser> userOpt = userRepository.findByEmail(email);
+                Optional<AppUser> userOpt = userRepository.findByEmail(email);  
                 AppUser user;
                 boolean isNewUser = false;
                 if (userOpt.isPresent()) {
@@ -212,13 +217,10 @@ public class AuthController {
 
                 return ResponseEntity.ok(user);
             } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid ID token. This usually means the Google token verification failed (wrong Client ID, expired, or clock skew). Check if Client ID matches exactly.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid ID token manually checked. Bad format or expired.");
             }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing Google login: " + e.getMessage());
-        }
-    }
-
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Google rejected the token: " + e.getResponseBodyAsString());
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");
