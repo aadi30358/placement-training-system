@@ -166,6 +166,7 @@ const Login = () => {
                                 console.error(err);
                                 toast.error("Google Login Blocked or Failed. Check pop-ups!");
                             }}
+                            use_fedcm_for_prompt={true}
                             theme="outline"
                             size="large"
                             text="signin_with"
