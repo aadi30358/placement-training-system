@@ -212,7 +212,7 @@ public class AuthController {
 
                 return ResponseEntity.ok(user);
             } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid ID token.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid ID token. This usually means the Google token verification failed (wrong Client ID, expired, or clock skew). Check if Client ID matches exactly.");
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing Google login: " + e.getMessage());
