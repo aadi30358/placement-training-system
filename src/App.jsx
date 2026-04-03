@@ -3,7 +3,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './layouts/Layout';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
-
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 import AdminDashboard from './pages/admin/Dashboard';
 import UserManagement from './pages/admin/ManageUsers';
 import AdminProfile from './pages/admin/Profile';
@@ -30,6 +31,8 @@ function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/" element={<Navigate to="/login" />} />
 
       {/* Admin Routes */}

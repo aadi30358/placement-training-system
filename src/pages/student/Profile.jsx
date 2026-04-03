@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 
 const Profile = () => {
     const { user, updateProfile } = useAuth();
+    const { updateStudent } = useData();
     const [loading, setLoading] = useState(false);
 
     // Form state

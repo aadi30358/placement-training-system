@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogIn, GraduationCap, Eye, EyeOff, User, Mail, Lock, ChevronRight } from 'lucide-react';
-import { Button } from '../../components/UI';
+import { Eye, EyeOff, Mail, Lock, LogIn, GraduationCap, Shield, Building2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
 import toast from 'react-hot-toast';
 
 const Login = () => {
@@ -10,160 +10,218 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [role, setRole] = useState('student');
-    const { login } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const { login, loginWithGoogle } = useAuth();
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-
-        // Simple simulation
-        const userData = {
-            id: Date.now(),
-            name: email.split('@')[0].replace('.', ' '),
-            email,
-            role
-        };
-
-        login(userData);
-        toast.success(`Logged in as ${role}`);
-        navigate(`/${role}/dashboard`);
+        setLoading(true);
+        try {
+            const userData = await login({ email, password, role });
+            toast.success(`Welcome back, ${userData.name || userData.role}!`);
+            navigate(`/${userData.role}/dashboard`);
+        } catch (err) {
+            const errorMessage = typeof err.response?.data === 'string'
+                ? err.response.data
+                : (err.response?.data?.message || err.message || 'Invalid credentials or role.');
+            toast.error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    return (
-        <div className="min-h-screen bg-[#0f0f0f] flex overflow-hidden">
-            {/* Left Section: Login Form */}
-            <div className="w-full lg:w-[450px] xl:w-[550px] flex flex-col justify-center px-8 sm:px-12 xl:px-20 z-10 bg-[#0f0f0f]">
-                <div className="mb-10">
-                    <div className="flex items-center gap-2 mb-8">
-                        <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary-900/20 text-xl font-bold">
-                            P
-                        </div>
-                        <span className="text-xl font-black text-white tracking-tight">PTS PORTAL</span>
-                    </div>
+    const handleGoogleSuccess = async (credentialResponse) => {
+        try {
+            const userData = await loginWithGoogle(credentialResponse.credential, role);
+            toast.success(`Logged in with Google as ${userData.role}`);
+            navigate(`/${userData.role}/dashboard`);
+        } catch (err) {
+            toast.error("Google Login failed. Please try again.");
+        }
+    };
 
-                    <h1 className="text-3xl font-bold text-white mb-2">Login</h1>
-                    <p className="text-slate-400 text-sm">Enter your campus credentials to access the portal</p>
+    const roleOptions = [
+        { value: 'student', label: 'Student', icon: GraduationCap },
+        { value: 'officer', label: 'Placement Officer', icon: Shield },
+        { value: 'employer', label: 'Employer / Recruiter', icon: Building2 },
+    ];
+
+    return (
+        <div className="login-page">
+            {/* Left Panel — Login Form */}
+            <div className="login-left">
+
+                {/* Institutional Header */}
+                <div className="login-header">
+                    <div className="login-logo">
+                        <GraduationCap size={28} />
+                    </div>
+                    <div>
+                        <p className="login-institute-name">Placement Training System</p>
+                        <p className="login-institute-sub">Campus Recruitment Portal</p>
+                    </div>
                 </div>
 
-                <form onSubmit={handleLogin} className="space-y-6">
-                    <div className="space-y-1.5 focus-within:transform focus-within:translate-x-1 transition-transform">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Login Role</label>
-                        <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                            <select
-                                className="w-full pl-10 pr-4 py-3 bg-[#1a1a1a] border border-slate-800 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all appearance-none"
-                                value={role}
-                                onChange={(e) => setRole(e.target.value)}
-                            >
-                                <option value="student">Student Portal</option>
-                                <option value="admin">Administrator</option>
-                                <option value="employer">Recruitment Partner</option>
-                                <option value="officer">Placement Officer</option>
-                            </select>
+                {/* Divider */}
+                <div className="login-divider" />
+
+                {/* Form Card */}
+                <div className="login-card">
+                    <h1 className="login-title">Student &amp; Staff Login</h1>
+                    <p className="login-subtitle">Sign in with your official institutional credentials</p>
+
+                    <form onSubmit={handleLogin} className="login-form">
+
+                        {/* Role Selector */}
+                        <div className="form-group">
+                            <label className="form-label">Login As</label>
+                            <div className="role-tabs">
+                                {roleOptions.map(({ value, label }) => (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        className={`role-tab ${role === value ? 'role-tab-active' : ''}`}
+                                        onClick={() => setRole(value)}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
+
+                        {/* Email */}
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="email">Email Address</label>
+                            <div className="input-wrapper">
+                                <Mail className="input-icon" size={17} />
+                                <input
+                                    id="email"
+                                    type="email"
+                                    placeholder="yourname@institution.edu"
+                                    className="form-input"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Password */}
+                        <div className="form-group">
+                            <div className="form-label-row">
+                                <label className="form-label" htmlFor="password">Password</label>
+                                <button 
+                                    type="button" 
+                                    className="forgot-link"
+                                    onClick={() => navigate('/forgot-password')}
+                                >
+                                    Forgot Password?
+                                </button>
+                            </div>
+                            <div className="input-wrapper">
+                                <Lock className="input-icon" size={17} />
+                                <input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="Enter your password"
+                                    className="form-input"
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                                <button
+                                    type="button"
+                                    className="input-eye"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Submit */}
+                        <button type="submit" className="submit-btn" disabled={loading}>
+                            {loading ? (
+                                <span className="btn-spinner" />
+                            ) : (
+                                <>
+                                    <LogIn size={18} />
+                                    <span>Sign In to Portal</span>
+                                </>
+                            )}
+                        </button>
+                    </form>
+
+                    <div className="flex items-center gap-4 my-6">
+                        <div className="flex-1 h-px bg-slate-100"></div>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Or continue with</span>
+                        <div className="flex-1 h-px bg-slate-100"></div>
                     </div>
 
-                    <div className="space-y-1.5 focus-within:transform focus-within:translate-x-1 transition-transform">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Campus Email</label>
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                            <input
-                                type="email"
-                                placeholder="name@university.edu"
-                                className="w-full pl-10 pr-4 py-3 bg-[#1a1a1a] border border-slate-800 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
+                    <div className="flex justify-center flex-col items-center gap-2">
+                        <GoogleLogin
+                            onSuccess={handleGoogleSuccess}
+                            onError={(err) => { 
+                                console.error(err);
+                                toast.error("Google Login Blocked or Failed. Check pop-ups!");
+                            }}
+                            theme="outline"
+                            size="large"
+                            text="signin_with"
+                            shape="pill"
+                            width="100%"
+                        />
                     </div>
 
-                    <div className="space-y-1.5 focus-within:transform focus-within:translate-x-1 transition-transform">
-                        <div className="flex justify-between items-center px-1">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Password</label>
-                            <button type="button" className="text-xs font-bold text-primary-500 hover:text-primary-400">Forgot Password?</button>
-                        </div>
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                placeholder="••••••••"
-                                className="w-full pl-10 pr-12 py-3 bg-[#1a1a1a] border border-slate-800 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                                required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
-                            >
-                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                        </div>
-                    </div>
-
-                    <Button type="submit" className="w-full py-3.5 mt-4 group shadow-lg shadow-primary-900/20">
-                        <div className="flex items-center justify-center gap-2">
-                            <span>Login to Dashboard</span>
-                            <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                        </div>
-                    </Button>
-                </form>
-
-                <div className="mt-12 text-center lg:text-left">
-                    <p className="text-slate-500 text-sm">
-                        Don't have a campus account?{' '}
-                        <Link to="/register" className="text-white font-bold hover:text-primary-400 ml-1 transition-colors">
-                            Sign up now
+                    <p className="login-register-text">
+                        New user?{' '}
+                        <Link to="/register" className="login-register-link">
+                            Create an account
                         </Link>
                     </p>
                 </div>
+
+                {/* Footer */}
+                <p className="login-footer">
+                    &copy; {new Date().getFullYear()} Placement Training System &bull; All rights reserved
+                </p>
             </div>
 
-            {/* Right Section: Visual Banner */}
-            <div className="hidden lg:flex flex-1 bg-primary-600 relative overflow-hidden items-center justify-center p-20">
-                {/* Background Shapes */}
-                <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary-500 rounded-full blur-[100px] opacity-50 capitalize"></div>
-                <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-indigo-500 rounded-full blur-[100px] opacity-30"></div>
-
-                <div className="relative z-10 w-full max-w-2xl text-white">
-                    <div className="space-y-6 mb-12">
-                        <h2 className="text-6xl font-black leading-tight tracking-tighter">
-                            Welcome to <br />
-                            <span className="text-primary-200 uppercase">the portal</span>
-                        </h2>
-                        <p className="text-primary-100 text-lg max-w-md font-medium">
-                            Join thousands of students and recruiters already using our platform for campus placements.
-                        </p>
+            {/* Right Panel — Illustration */}
+            <div className="login-right">
+                <div className="login-right-inner">
+                    <div className="login-right-badge">
+                        <GraduationCap size={20} />
+                        <span>Placement Training System</span>
                     </div>
-
-                    {/* Illustration Placeholder/Image */}
-                    <div className="relative">
-                        <img
-                            src="/login_illustration_purple.png"
-                            alt="Student Placement Illustration"
-                            className="w-full h-auto drop-shadow-2xl animate-float"
-                            onError={(e) => {
-                                e.target.src = 'https://img.freepik.com/free-vector/job-interview-concept-illustration_114360-1677.jpg';
-                                e.target.className = 'w-full h-auto drop-shadow-2xl rounded-3xl';
-                            }}
-                        />
-                    </div>
-                </div>
-
-                {/* Glassmorphism Badge */}
-                <div className="absolute bottom-12 right-12 bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl flex items-center gap-4 shadow-2xl">
-                    <div className="flex -space-x-3">
-                        {[1, 2, 3, 4].map(i => (
-                            <div key={i} className={`w-8 h-8 rounded-full border-2 border-primary-600 bg-primary-${i}00 flex items-center justify-center text-[10px] font-bold`}>
-                                U{i}
-                            </div>
-                        ))}
-                    </div>
-                    <div>
-                        <p className="text-white text-xs font-black uppercase tracking-widest">Active Now</p>
-                        <p className="text-primary-200 text-[10px]">Over 1,200+ students online</p>
+                    <h2 className="login-right-title">
+                        Your Career<br />Starts Here
+                    </h2>
+                    <p className="login-right-sub">
+                        Connect with top recruiters, track your applications, and find your dream job — all in one place.
+                    </p>
+                    <img
+                        src="/login-hero.png"
+                        alt="Campus Placement Illustration"
+                        className="login-illustration"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                    <div className="login-stats">
+                        <div className="stat-item">
+                            <span className="stat-number">1,200+</span>
+                            <span className="stat-label">Students</span>
+                        </div>
+                        <div className="stat-divider" />
+                        <div className="stat-item">
+                            <span className="stat-number">300+</span>
+                            <span className="stat-label">Recruiters</span>
+                        </div>
+                        <div className="stat-divider" />
+                        <div className="stat-item">
+                            <span className="stat-number">85%</span>
+                            <span className="stat-label">Placement Rate</span>
+                        </div>
                     </div>
                 </div>
             </div>

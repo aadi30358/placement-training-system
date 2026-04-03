@@ -6,10 +6,14 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const StudentDashboard = () => {
-    const { jobs, getStudentApplications } = useData();
+    const { jobs, getStudentApplications, students } = useData();
     const { user } = useAuth();
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
+
+    const myStudentData = useMemo(() => {
+        return students.find(s => s.email === user?.email) || { id: user?.id, name: user?.name, email: user?.email, dept: 'N/A' };
+    }, [students, user]);
 
     const appliedJobs = useMemo(() => {
         return getStudentApplications(user?.id);
@@ -213,6 +217,33 @@ const StudentDashboard = () => {
                         <Button className="w-full py-4 text-xs font-black uppercase" onClick={() => navigate('/student/profile')}>
                             Refine My Resume
                         </Button>
+                    </Card>
+
+                    <Card title="My Database Record" subtitle="Current registered details shadow-sm">
+                        <div className="w-full overflow-x-auto rounded-xl border border-slate-100 shadow-sm">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-slate-50 border-b border-slate-100">
+                                    <tr>
+                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">ID</th>
+                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Name</th>
+                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email</th>
+                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Branch</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white">
+                                    <tr className="hover:bg-slate-50/50">
+                                        <td className="px-4 py-4 text-slate-500 font-bold">#{myStudentData.id}</td>
+                                        <td className="px-4 py-4 font-bold text-slate-900">{myStudentData.name}</td>
+                                        <td className="px-4 py-4 text-slate-500 text-xs">{myStudentData.email}</td>
+                                        <td className="px-4 py-4">
+                                            <span className="px-2 py-0.5 bg-primary-50 text-primary-600 rounded text-[10px] font-black uppercase tracking-widest">
+                                                {myStudentData.dept || user?.dept || 'Pending'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </Card>
                 </div>
             </div>

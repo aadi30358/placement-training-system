@@ -19,13 +19,10 @@ const SidebarItem = ({ to, icon: Icon, label }) => (
     <NavLink
         to={to}
         className={({ isActive }) =>
-            `flex items-center gap-3 px-5 py-3.5 rounded-xl transition-all font-bold text-sm ${isActive
-                ? 'bg-primary-50 text-primary-600 shadow-sm shadow-primary-100/50'
-                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
-            }`
+            `sidebar-item ${isActive ? 'sidebar-item-active' : ''}`
         }
     >
-        <Icon size={18} />
+        <Icon size={20} />
         <span>{label}</span>
     </NavLink>
 );
@@ -66,31 +63,32 @@ export const Sidebar = ({ role }) => {
     };
 
     return (
-        <aside className="w-64 h-screen fixed left-0 top-0 bg-white border-r border-slate-100 flex flex-col p-6 z-20">
-            <div className="flex items-center gap-3 mb-10 px-2">
-                <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-200">
+        <aside className="sidebar">
+            <div className="sidebar-logo-container">
+                <div className="sidebar-logo">
                     <GraduationCap size={24} />
                 </div>
                 <div className="flex flex-col">
-                    <span className="text-xl font-black text-slate-900 tracking-tighter leading-none">Job Finder</span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Campus Edition</span>
+                    <span className="sidebar-brand-name">PTS Portal</span>
+                    <span className="sidebar-brand-sub">University Edition</span>
                 </div>
             </div>
 
-            <nav className="flex-1 space-y-2">
+            <nav className="sidebar-nav">
                 {menuItems[role]?.map((item) => (
                     <SidebarItem key={item.to} {...item} />
                 ))}
             </nav>
 
-            <div className="pt-6 border-t border-slate-100 space-y-2">
-                <SidebarItem to="/settings" icon={Settings} label="Global Settings" />
+            <div className="sidebar-footer">
+                <SidebarItem to="/settings" icon={Settings} label="Settings" />
                 <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all font-bold text-sm"
+                    className="sidebar-item hover:text-red-600 hover:bg-red-50"
+                    style={{ border: 'none', background: 'none', width: '100%', cursor: 'pointer' }}
                 >
-                    <LogOut size={18} />
-                    <span>Exit Portal</span>
+                    <LogOut size={20} />
+                    <span>Logout</span>
                 </button>
             </div>
         </aside>
@@ -106,59 +104,59 @@ export const Navbar = ({ role }) => {
     const unreadCount = userNotifs.filter(n => !n.read).length;
 
     return (
-        <header className="h-20 fixed top-0 right-0 left-64 bg-white/90 backdrop-blur-xl border-b border-slate-100 flex items-center justify-between px-10 z-10">
-            <div className="flex items-center gap-3">
-                <span className="px-3 py-1 bg-primary-50 text-primary-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-primary-100 italic">
-                    {role} Level
+        <header className="navbar">
+            <div className="navbar-left">
+                <span className="navbar-badge">
+                    {role} Dashboard
                 </span>
             </div>
 
-            <div className="flex items-center gap-6">
+            <div className="navbar-right">
                 <div className="relative">
                     <button
-                        className="p-2.5 text-slate-400 hover:bg-slate-50 rounded-xl relative transition-all border border-transparent hover:border-slate-100"
+                        className="nav-action-btn"
                         onClick={() => setShowNotifs(!showNotifs)}
                     >
                         <Bell size={20} />
                         {unreadCount > 0 && (
-                            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary-600 rounded-full border-2 border-white"></span>
+                            <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
                         )}
                     </button>
 
                     {showNotifs && (
-                        <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-100 rounded-2xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="absolute right-0 mt-4 w-80 bg-white border border-slate-100 rounded-2xl shadow-2xl p-4 z-50">
                             <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-50">
-                                <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Notifications</h4>
-                                <span className="text-[10px] font-black text-primary-600 whitespace-nowrap">{unreadCount} New</span>
+                                <h4 className="text-sm font-bold text-slate-900">Notifications</h4>
+                                <span className="text-[10px] font-bold text-primary-600">{unreadCount} New</span>
                             </div>
-                            <div className="max-h-64 overflow-y-auto space-y-2 scrollbar-none">
+                            <div className="max-h-64 overflow-y-auto space-y-2">
                                 {userNotifs.length > 0 ? userNotifs.map(n => (
                                     <div
                                         key={n.id}
-                                        className={`p-3 rounded-xl border transition-all cursor-pointer ${n.read ? 'bg-white border-slate-50 opacity-60' : 'bg-primary-50/30 border-primary-50'}`}
+                                        className={`p-3 rounded-xl border transition-all cursor-pointer ${n.read ? 'bg-white border-slate-50 opacity-60' : 'bg-blue-50/50 border-blue-100'}`}
                                         onClick={() => {
                                             markNotificationAsRead(n.id);
                                             setShowNotifs(false);
                                         }}
                                     >
-                                        <p className="text-xs font-bold text-slate-800 leading-snug">{n.message}</p>
-                                        <p className="text-[9px] text-slate-400 mt-1 font-medium">{new Date(n.date).toLocaleTimeString()}</p>
+                                        <p className="text-xs font-semibold text-slate-800 leading-snug">{n.message}</p>
+                                        <p className="text-[9px] text-slate-400 mt-1">{new Date(n.date).toLocaleTimeString()}</p>
                                     </div>
                                 )) : (
-                                    <p className="text-center py-6 text-slate-400 text-xs font-medium italic">All caught up!</p>
+                                    <p className="text-center py-6 text-slate-400 text-xs italic">All caught up!</p>
                                 )}
                             </div>
                         </div>
                     )}
                 </div>
 
-                <div className="flex items-center gap-4 pl-6 border-l border-slate-100">
-                    <div className="text-right hidden sm:block">
-                        <p className="text-sm font-black text-slate-900 leading-tight tracking-tight">{user?.name || 'Academic User'}</p>
-                        <span className="text-[10px] text-primary-600 uppercase font-black tracking-widest leading-none">{role}</span>
+                <div className="nav-user-profile">
+                    <div className="nav-user-info hidden sm:block">
+                        <p className="nav-user-name">{user?.name || 'Academic User'}</p>
+                        <span className="nav-user-role">{role}</span>
                     </div>
-                    <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 overflow-hidden border-2 border-white shadow-sm ring-1 ring-slate-100">
-                        <User size={26} />
+                    <div className="nav-avatar">
+                        <User size={24} />
                     </div>
                 </div>
             </div>
@@ -188,11 +186,11 @@ export const Layout = ({ allowedRoles = [] }) => {
 
     if (isInternal) {
         return (
-            <div className="flex bg-slate-50">
+            <div className="layout-container">
                 <Sidebar role={user.role} />
-                <div className="flex-1 flex flex-col pl-64">
+                <div className="main-content">
                     <Navbar role={user.role} />
-                    <main className="flex-1 p-8 mt-20">
+                    <main className="page-container">
                         <Outlet />
                     </main>
                 </div>
