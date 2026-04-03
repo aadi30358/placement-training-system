@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'https://placement-training-system-1-g5sq.onrender.com/api',
+    baseURL: 'http://localhost:8080/api',
     headers: {
         'Content-Type': 'application/json',
     },
