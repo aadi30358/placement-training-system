@@ -172,6 +172,7 @@ public class AuthController {
 
         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
                 .setAudience(Collections.singletonList(googleClientId))
+                .setAcceptableTimeSkewSeconds(300) // 5 minutes clock skew tolerance
                 .build();
 
         try {
