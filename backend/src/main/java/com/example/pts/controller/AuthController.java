@@ -221,6 +221,11 @@ public class AuthController {
             }
         } catch (org.springframework.web.client.HttpClientErrorException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Google rejected the token: " + e.getResponseBodyAsString());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing Google login: " + e.getMessage());
+        }
+    }
+
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");

@@ -3,9 +3,9 @@ com\example\pts\controller\JobController.class
 com\example\pts\model\Application.class
 com\example\pts\PtsBackendApplication.class
 com\example\pts\repository\OfficerRepository.class
+com\example\pts\config\MailConfig.class
 com\example\pts\controller\OfficerController.class
 com\example\pts\model\Student.class
-application.properties
 com\example\pts\model\Notification.class
 com\example\pts\model\Employer.class
 com\example\pts\repository\StudentRepository.class

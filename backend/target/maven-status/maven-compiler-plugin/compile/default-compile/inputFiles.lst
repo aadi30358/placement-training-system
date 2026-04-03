@@ -5,6 +5,7 @@ C:\Users\yaswa\Documents\desktop apps\projects\pts\backend\src\main\java\com\exa
 C:\Users\yaswa\Documents\desktop apps\projects\pts\backend\src\main\java\com\example\pts\service\EmailService.java
 C:\Users\yaswa\Documents\desktop apps\projects\pts\backend\src\main\java\com\example\pts\repository\ApplicationRepository.java
 C:\Users\yaswa\Documents\desktop apps\projects\pts\backend\src\main\java\com\example\pts\security\CustomUserDetailsService.java
+C:\Users\yaswa\Documents\desktop apps\projects\pts\backend\src\main\java\com\example\pts\config\MailConfig.java
 C:\Users\yaswa\Documents\desktop apps\projects\pts\backend\src\main\java\com\example\pts\model\AppUser.java
 C:\Users\yaswa\Documents\desktop apps\projects\pts\backend\src\main\java\com\example\pts\controller\ApplicationController.java
 C:\Users\yaswa\Documents\desktop apps\projects\pts\backend\src\main\java\com\example\pts\repository\NotificationRepository.java
