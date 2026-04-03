@@ -37,7 +37,8 @@ const Login = () => {
             toast.success(`Logged in with Google as ${userData.role}`);
             navigate(`/${userData.role}/dashboard`);
         } catch (err) {
-            toast.error("Google Login failed. Please try again.");
+            const msg = typeof err.response?.data === 'string' ? err.response.data : err.message;
+            toast.error(`Google Login failed: ${msg}`);
         }
     };
 
