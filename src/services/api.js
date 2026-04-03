@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'https://pts-backend-wuyz.onrender.com/api', // Spring Boot backend URL
+    baseURL: 'https://placement-training-system-1-g5sq.onrender.com/api', // Spring Boot backend URL
     headers: {
         'Content-Type': 'application/json',
     },
