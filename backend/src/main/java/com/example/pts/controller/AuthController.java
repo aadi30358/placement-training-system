@@ -4,6 +4,7 @@ import com.example.pts.model.AppUser;
 import com.example.pts.model.Student;
 import com.example.pts.model.Employer;
 import com.example.pts.model.Officer;
+import com.example.pts.model.Job;
 import com.example.pts.repository.UserRepository;
 import com.example.pts.repository.StudentRepository;
 import com.example.pts.repository.EmployerRepository;
@@ -170,20 +171,15 @@ public class AuthController {
         String requestedRole = request.get("role");
 
         try {
-            org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
-            String url = "https://oauth2.googleapis.com/tokeninfo?id_token=" + idTokenString;
-            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
-            
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                Map<String, Object> payload = response.getBody();
-                
-                // Optional: Verify audience (client ID)
-                String aud = (String) payload.get("aud");
-                if (!googleClientId.equals(aud)) {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Audience. Expected " + googleClientId + " but got " + aud);
-                }
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                    .setAudience(Collections.singletonList(googleClientId))
+                    .build();
 
-                String email = (String) payload.get("email");
+            GoogleIdToken idToken = verifier.verify(idTokenString);
+            if (idToken != null) {
+                GoogleIdToken.Payload payload = idToken.getPayload();
+                
+                String email = payload.getEmail();
                 String name = (String) payload.get("name");
 
                 Optional<AppUser> userOpt = userRepository.findByEmail(email);  
@@ -208,25 +204,19 @@ public class AuthController {
                 String token = jwtUtils.generateToken(user.getEmail(), user.getRole());
                 user.setToken(token);
 
-                // Send login notification with latest placements in a new thread so it doesn't block
-                final String userEmail = email;
-                final String userName = name;
-                final boolean IsNew = isNewUser;
-                new Thread(() -> {
-                    try {
-                        emailService.sendLoginNotificationEmail(userEmail, userName, jobRepository.findTop3ByOrderByIdDesc(), IsNew);
-                    } catch (Exception e) {
-                        System.err.println("Failed to send login notification: " + e.getMessage());
-                    }
-                }).start();
+                // Send login notification with latest placements (Async powered)
+                try {
+                    emailService.sendLoginNotificationEmail(email, name, jobRepository.findTop3ByOrderByIdDesc(), isNewUser);
+                } catch (Exception e) {
+                    logger.error("Failed to trigger login notification: {}", e.getMessage());
+                }
 
                 return ResponseEntity.ok(user);
             } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid ID token manually checked. Bad format or expired.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid ID token. Verification failed.");
             }
-        } catch (org.springframework.web.client.HttpClientErrorException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Google rejected the token: " + e.getResponseBodyAsString());
         } catch (Exception e) {
+            logger.error("Error processing Google login: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing Google login: " + e.getMessage());
         }
     }
@@ -296,5 +286,10 @@ public class AuthController {
             return ResponseEntity.ok(userRepository.save(user));
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/health")
+    public ResponseEntity<?> healthCheck() {
+        return ResponseEntity.ok(Map.of("status", "UP", "timestamp", java.time.LocalDateTime.now()));
     }
 }

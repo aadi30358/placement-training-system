@@ -1,0 +1,47 @@
+services:
+  # Backend API (Spring Boot)
+  - type: web
+    name: pts-backend
+    env: docker
+    dockerContext: backend
+    dockerfilePath: backend/Dockerfile
+    plan: free # Change if needed
+    healthCheckPath: /api/auth/health # I'll add this endpoint
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: DB_HOST
+        fromDatabase:
+          name: pts-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: pts-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: pts-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: pts-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: pts-db
+          property: password
+
+  # Database (Optional - switching to PostgreSQL for native Render support)
+databases:
+  - name: pts-db
+    plan: free
+    databaseName: pts
+    user: pts_user

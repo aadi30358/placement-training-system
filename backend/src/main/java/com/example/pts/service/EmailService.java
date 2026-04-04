@@ -10,6 +10,8 @@ import jakarta.mail.internet.MimeMessage;
 import com.example.pts.model.Job;
 import java.util.List;
 
+import org.springframework.scheduling.annotation.Async;
+
 @Service
 public class EmailService {
 
@@ -18,6 +20,7 @@ public class EmailService {
 
     private final String fromEmail = "yaswanthadithyareddy11@gmail.com";
 
+    @Async
     public void sendEmail(String to, String subject, String body) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
@@ -31,6 +34,7 @@ public class EmailService {
         }
     }
 
+    @Async
     public void sendHtmlEmail(String to, String subject, String htmlBody) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -45,6 +49,7 @@ public class EmailService {
         }
     }
 
+    @Async
     public void sendLoginNotificationEmail(String to, String name, List<Job> jobs, boolean isNewUser) {
         StringBuilder html = new StringBuilder();
         html.append("<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;'>");
@@ -93,6 +98,7 @@ public class EmailService {
         sendHtmlEmail(to, subject, html.toString());
     }
 
+    @Async
     public void sendPasswordResetEmail(String to, String otp) {
         String body = "You requested a password reset for your Placement Training System Portal account.\n\n" +
                       "Your One-Time Password (OTP) is: " + otp + "\n\n" +
@@ -100,6 +106,7 @@ public class EmailService {
         sendEmail(to, "Your Password Reset OTP - Placement Training System Portal", body);
     }
     
+    @Async
     public void sendNotificationEmail(String to, String message) {
         String body = "New Notification from Placement Training System Portal:\n\n" + message;
         sendEmail(to, "New Notification - Placement Training System Portal", body);
