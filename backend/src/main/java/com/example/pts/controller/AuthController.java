@@ -208,12 +208,17 @@ public class AuthController {
                 String token = jwtUtils.generateToken(user.getEmail(), user.getRole());
                 user.setToken(token);
 
-                // Send login notification with latest placements
-                try {
-                    emailService.sendLoginNotificationEmail(email, name, jobRepository.findTop3ByOrderByIdDesc(), isNewUser);
-                } catch (Exception e) {
-                    System.err.println("Failed to send login notification: " + e.getMessage());
-                }
+                // Send login notification with latest placements in a new thread so it doesn't block
+                final String userEmail = email;
+                final String userName = name;
+                final boolean IsNew = isNewUser;
+                new Thread(() -> {
+                    try {
+                        emailService.sendLoginNotificationEmail(userEmail, userName, jobRepository.findTop3ByOrderByIdDesc(), IsNew);
+                    } catch (Exception e) {
+                        System.err.println("Failed to send login notification: " + e.getMessage());
+                    }
+                }).start();
 
                 return ResponseEntity.ok(user);
             } else {
