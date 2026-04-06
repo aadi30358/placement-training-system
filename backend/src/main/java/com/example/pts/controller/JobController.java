@@ -1,9 +1,12 @@
 package com.example.pts.controller;
 
 import com.example.pts.model.Job;
+import com.example.pts.dto.JobDTO;
 import com.example.pts.repository.JobRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/jobs")
@@ -11,23 +14,29 @@ import java.util.List;
 public class JobController {
 
     private final JobRepository jobRepository;
+    private final ModelMapper modelMapper;
 
-    public JobController(JobRepository jobRepository) {
+    public JobController(JobRepository jobRepository, ModelMapper modelMapper) {
         this.jobRepository = jobRepository;
+        this.modelMapper = modelMapper;
     }
 
     @GetMapping
-    public List<Job> getAllJobs() {
-        return jobRepository.findAll();
+    public List<JobDTO> getAllJobs() {
+        return jobRepository.findAll().stream()
+                .map(job -> modelMapper.map(job, JobDTO.class))
+                .collect(Collectors.toList());
     }
 
     @PostMapping
-    public Job createJob(@RequestBody Job job) {
-        return jobRepository.save(job);
+    public JobDTO createJob(@RequestBody JobDTO jobDTO) {
+        Job job = modelMapper.map(jobDTO, Job.class);
+        Job savedJob = jobRepository.save(job);
+        return modelMapper.map(savedJob, JobDTO.class);
     }
 
     @PutMapping("/{id}")
-    public Job updateJob(@PathVariable Long id, @RequestBody Job jobDetails) {
+    public JobDTO updateJob(@PathVariable Long id, @RequestBody JobDTO jobDetails) {  
         return jobRepository.findById(id).map(job -> {
             job.setTitle(jobDetails.getTitle());
             job.setCompany(jobDetails.getCompany());
@@ -36,11 +45,11 @@ public class JobController {
             job.setType(jobDetails.getType());
             job.setDeadline(jobDetails.getDeadline());
             job.setEligibility(jobDetails.getEligibility());
-            job.setPostedAt(jobDetails.getPostedAt());
-            return jobRepository.save(job);
+            return modelMapper.map(jobRepository.save(job), JobDTO.class);
         }).orElseGet(() -> {
-            jobDetails.setId(id);
-            return jobRepository.save(jobDetails);
+            Job newJob = modelMapper.map(jobDetails, Job.class);
+            newJob.setId(id);
+            return modelMapper.map(jobRepository.save(newJob), JobDTO.class);
         });
     }
 

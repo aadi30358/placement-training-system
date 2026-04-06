@@ -63,7 +63,7 @@ public class EmailService {
         html.append("<div style='padding: 20px; color: #333;'>");
         html.append("<h2>Hello, ").append(name).append("!</h2>");
         if (isNewUser) {
-            html.append("<p style='font-size: 16px; line-height: 1.6;'>Welcome to the **Placement Training System**! Your account has been successfully created via Google.</p>");
+            html.append("<p style='font-size: 16px; line-height: 1.6;'>Welcome to the **Placement Training System**! Your account has been successfully created.</p>");
             html.append("<p style='font-size: 16px; line-height: 1.6;'>You can now explore job opportunities, track your applications, and prepare for your career.</p>");
         } else {
             html.append("<p style='font-size: 16px; line-height: 1.6;'>We noticed a new login to your Placement Training System account. If this was you, you can safely ignore this email.</p>");

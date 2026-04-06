@@ -35,7 +35,7 @@ const Login = () => {
         try {
             const userData = await loginWithGoogle(credentialResponse.credential, role);
             toast.success(`Logged in with Google as ${userData.role}`);
-            navigate(`/${userData.role}/dashboard`);
+            navigate(`/${userData.role === 'admin' ? 'admin' : userData.role}/dashboard`);
         } catch (err) {
             const msg = typeof err.response?.data === 'string' ? err.response.data : err.message;
             toast.error(`Google Login failed: ${msg}`);
@@ -176,7 +176,7 @@ const Login = () => {
                         />
                     </div>
 
-                    <p className="login-register-text">
+                    <p className="login-register-text" style={{ marginTop: '20px' }}>
                         New user?{' '}
                         <Link to="/register" className="login-register-link">
                             Create an account

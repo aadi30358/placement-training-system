@@ -8,7 +8,6 @@ import { AuthProvider } from './context/AuthContext'
 import { DataProvider } from './context/DataContext'
 import './index.css'
 
-// Replace with your real Google Client ID
 const GOOGLE_CLIENT_ID = "478861245484-spgps6leq11l8sv7kqfqd56cgatss3pe.apps.googleusercontent.com"
 
 ReactDOM.createRoot(document.getElementById('root')).render(

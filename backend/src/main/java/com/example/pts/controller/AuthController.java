@@ -1,5 +1,8 @@
 package com.example.pts.controller;
 
+import com.example.pts.dto.AuthResponseDTO;
+import com.example.pts.dto.LoginRequestDTO;
+import com.example.pts.dto.RegisterRequestDTO;
 import com.example.pts.model.AppUser;
 import com.example.pts.model.Student;
 import com.example.pts.model.Employer;
@@ -48,7 +51,8 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
 
-    private final String googleClientId = "478861245484-spgps6leq11l8sv7kqfqd56cgatss3pe.apps.googleusercontent.com";
+    @Value("${google.clientId:478861245484-spgps6leq11l8sv7kqfqd56cgatss3pe.apps.googleusercontent.com}")
+    private String googleClientId;
 
     public AuthController(UserRepository userRepository, 
                           StudentRepository studentRepository, 
@@ -71,28 +75,33 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody AppUser user) {
+    public ResponseEntity<?> registerUser(@RequestBody RegisterRequestDTO request) {
         try {
-            if (user.getEmail() == null || user.getEmail().isEmpty()) {
+            if (request.getEmail() == null || request.getEmail().isEmpty()) {
                 return ResponseEntity.badRequest().body("Email cannot be empty.");
             }
-            
-            if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+
+            if (userRepository.findByEmail(request.getEmail()).isPresent()) {
                 return ResponseEntity.badRequest().body("Email already registered.");
             }
-            
-            // Encrypt the password before saving
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-            
-            // Save the authentication user
+
+            AppUser user = new AppUser();
+            user.setName(request.getName());
+            user.setEmail(request.getEmail());
+            user.setRole(request.getRole());
+            user.setCompany(request.getCompany());
+            user.setRoll(request.getRoll());
+            user.setIsNewUser(true);
+            user.setIsProfileComplete(false);
+
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+
             AppUser savedUser = userRepository.save(user);
-            
-            // Also add them to the respective role tables so they appear in Dashboards
             autoCreateRoleEntry(savedUser);
-            
-            return ResponseEntity.ok(savedUser);
+
+            return ResponseEntity.ok(mapToAuthResponse(savedUser, null));
         } catch (Exception e) {
-            logger.error("Registration error for email {}: {}", user.getEmail(), e.getMessage(), e);
+            logger.error("Registration error for email {}: {}", request.getEmail(), e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Registration failed: " + e.getMessage());
         }
@@ -131,9 +140,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody AppUser loginRequest) {
+    public ResponseEntity<?> loginUser(@RequestBody LoginRequestDTO loginRequest) {
         try {
-            // Authenticate using Spring Security
             authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
             );
@@ -141,28 +149,27 @@ public class AuthController {
             Optional<AppUser> userOptional = userRepository.findByEmail(loginRequest.getEmail());
             if (userOptional.isPresent()) {
                 AppUser user = userOptional.get();
-                
-                // Case-insensitive role check
-                if (!user.getRole().equalsIgnoreCase(loginRequest.getRole())) {
+
+                // Allow admin role to bypass requested role validations
+                if (!user.getRole().equalsIgnoreCase("admin") && !user.getRole().equalsIgnoreCase(loginRequest.getRole())) {
                     return ResponseEntity.status(401).body("Invalid role for this user.");
                 }
 
                 logger.info("User {} successfully authenticated with role {}", user.getEmail(), user.getRole());
-                
+
                 String token = jwtUtils.generateToken(user.getEmail(), user.getRole());
-                user.setToken(token);
 
                 try {
                     emailService.sendLoginNotificationEmail(user.getEmail(), user.getName(), jobRepository.findTop3ByOrderByIdDesc(), false);
                 } catch (Exception e) {
-                    System.err.println("Failed to send login notification: " + e.getMessage());
+                    logger.error("Failed to send login notification: {}", e.getMessage());
                 }
-                return ResponseEntity.ok(user);
+return ResponseEntity.ok(mapToAuthResponse(user, token));
             }
+            return ResponseEntity.status(404).body("User not found.");
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Invalid credentials: " + e.getMessage());
         }
-        return ResponseEntity.status(404).body("User not found.");
     }
 
     @PostMapping("/google")
@@ -192,37 +199,40 @@ public class AuthController {
                 
                 String email = payload.getEmail();
                 String name = (String) payload.get("name");
+                String pictureUrl = (String) payload.get("picture");
 
                 Optional<AppUser> userOpt = userRepository.findByEmail(email);  
                 AppUser user;
                 boolean isNewUser = false;
                 if (userOpt.isPresent()) {
                     user = userOpt.get();
+                    if (pictureUrl != null) {
+                        user.setProfilePicture(pictureUrl);
+                        user = userRepository.save(user);
+                    }
                 } else {
                     isNewUser = true;
                     user = new AppUser();
                     user.setEmail(email);
                     user.setName(name);
+                    user.setProfilePicture(pictureUrl);
                     user.setRole(requestedRole != null ? requestedRole : "student");
                     user.setIsNewUser(true);
                     user.setIsProfileComplete(false);
-                    // Crucial: Set a placeholder password to avoid database NOT NULL constraints
-                    user.setPassword(UUID.randomUUID().toString());
+                    user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
                     user = userRepository.save(user);
                     autoCreateRoleEntry(user);
                 }
-                // Generate Token
+                
                 String token = jwtUtils.generateToken(user.getEmail(), user.getRole());
-                user.setToken(token);
 
-                // Send login notification with latest placements (Async powered)
                 try {
                     emailService.sendLoginNotificationEmail(email, name, jobRepository.findTop3ByOrderByIdDesc(), isNewUser);
                 } catch (Exception e) {
                     logger.error("Failed to trigger login notification: {}", e.getMessage());
                 }
 
-                return ResponseEntity.ok(user);
+                return ResponseEntity.ok(mapToAuthResponse(user, token));
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid ID token. Verification failed.");
             }
@@ -230,6 +240,19 @@ public class AuthController {
             logger.error("Error processing Google login: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing Google login: " + e.getMessage());
         }
+    }
+
+    private AuthResponseDTO mapToAuthResponse(AppUser user, String token) {
+        AuthResponseDTO response = new AuthResponseDTO();
+        response.setId(user.getId());
+        response.setName(user.getName());
+        response.setEmail(user.getEmail());
+        response.setRole(user.getRole());
+        response.setToken(token != null ? token : user.getToken());
+        response.setProfilePicture(user.getProfilePicture());
+        response.setIsProfileComplete(user.getIsProfileComplete());
+        response.setIsNewUser(user.getIsNewUser());
+        return response;
     }
 
     @PostMapping("/forgot-password")
