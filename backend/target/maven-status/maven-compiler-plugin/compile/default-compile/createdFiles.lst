@@ -1,6 +1,7 @@
 com\example\pts\controller\AdminController.class
 com\example\pts\controller\JobController.class
 com\example\pts\model\Application.class
+com\example\pts\controller\TestController.class
 com\example\pts\PtsBackendApplication.class
 com\example\pts\repository\OfficerRepository.class
 com\example\pts\config\MailConfig.class

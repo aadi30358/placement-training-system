@@ -19,29 +19,12 @@ services:
       - key: MAIL_PASSWORD
         sync: false
       - key: DB_HOST
-        fromDatabase:
-          name: pts-db
-          property: host
+        sync: false
       - key: DB_PORT
-        fromDatabase:
-          name: pts-db
-          property: port
+        sync: false
       - key: DB_NAME
-        fromDatabase:
-          name: pts-db
-          property: database
+        sync: false
       - key: DB_USER
-        fromDatabase:
-          name: pts-db
-          property: user
+        sync: false
       - key: DB_PASSWORD
-        fromDatabase:
-          name: pts-db
-          property: password
-
-  # Database (Optional - switching to PostgreSQL for native Render support)
-databases:
-  - name: pts-db
-    plan: free
-    databaseName: pts
-    user: pts_user
+        sync: false

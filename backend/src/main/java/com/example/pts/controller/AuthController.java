@@ -170,12 +170,23 @@ public class AuthController {
         String idTokenString = request.get("credential");
         String requestedRole = request.get("role");
 
+        if (idTokenString == null || idTokenString.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing Google ID token.");
+        }
+
         try {
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
                     .setAudience(Collections.singletonList(googleClientId))
                     .build();
 
-            GoogleIdToken idToken = verifier.verify(idTokenString);
+            GoogleIdToken idToken;
+            try {
+                idToken = verifier.verify(idTokenString);
+            } catch (IllegalArgumentException e) {
+                logger.error("Invalid Google Token format.", e);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid Google Token format.");
+            }
+
             if (idToken != null) {
                 GoogleIdToken.Payload payload = idToken.getPayload();
                 
